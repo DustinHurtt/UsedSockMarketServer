@@ -1,4 +1,4 @@
-const isProfileOwner = () => {
+const isProfileOwner = (req, res, next) => {
 
     if (req.user._id === req.params.userId) {
         next()

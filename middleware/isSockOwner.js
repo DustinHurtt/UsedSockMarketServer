@@ -1,7 +1,7 @@
 
 const Sock = require('../models/Sock');
 
-const isSockOwner = () => {
+const isSockOwner = (req, res, next) => {
 
     Sock.findById(req.params.id)
         .then((foundSock) => {
