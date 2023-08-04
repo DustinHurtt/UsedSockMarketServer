@@ -3,9 +3,11 @@ const Sock = require('../models/Sock');
 
 const isSockOwner = (req, res, next) => {
 
-    Sock.findById(req.params.id)
+    console.log("ISSOCKOWNER =====>", req.params, req.body)
+
+    Sock.findById(req.params.sockId)
         .then((foundSock) => {
-            if (req.body.owner === foundSock.owner.toString()) {
+            if (req.user._id === foundSock.owner.toString()) {
                 next()
             } else {
                 res.status(401).json({message: "Validation Error"})

@@ -9,7 +9,7 @@ const cartSchema = new Schema(
         },
         tax: {
             type: Number,
-            default: 0.08
+            default: 1.08
         },
         total: {
             type: Number,
@@ -17,10 +17,10 @@ const cartSchema = new Schema(
         },
         owner: {type: Schema.Types.ObjectId, ref: 'User'},
         // timeLeft: Date
+        expireAt: { type: Date, expires: '2m', default: Date.now }
     },
     {
-        // timeseries: true,
-        createdAt: { type: Date, expires: '2m', default: Date.now }
+        timestamps: true,
     }
 )
 

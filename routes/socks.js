@@ -10,6 +10,11 @@ const isSockOwner = require('../middleware/isSockOwner')
 router.get('/', (req, res, next) => {
   
     Sock.find()
+        .populate('owner')
+        .populate({
+            path: 'comments',
+            populate: { path: 'author'}
+        })
         .then((allSocks) => {
             res.json(allSocks)
         })
@@ -50,6 +55,7 @@ router.get('/sock-detail/:sockId', (req, res, next) => {
     const { sockId } = req.params
 
     Sock.findById(sockId)
+        .populate('owner')
         .populate({
             path: 'comments',
             populate: { path: 'author'}
@@ -82,6 +88,11 @@ router.post('/sock-update/:sockId', isAuthenticated, isSockOwner, (req, res, nex
         },
         { new: true}
     )
+        .populate('owner')
+        .populate({
+            path: 'comments',
+            populate: { path: 'author'}
+        })
         .then((updatedSock) => {
             res.json(updatedSock)
         })

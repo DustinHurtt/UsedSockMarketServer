@@ -8,9 +8,9 @@ const isAuthenticated = require('../middleware/isAuthenticated');
 
 router.get('/', isAuthenticated, (req, res, next) => {
 
-    const cartId = req.use.cart
-
-    Cart.findById(cartId)
+    Cart.findOne({
+        owner: req.user._id
+    })
         .populate('socks')
         .then((foundCart) => {
             if(!foundCart) {
@@ -25,76 +25,122 @@ router.get('/', isAuthenticated, (req, res, next) => {
 
 });
 
-router.post('/create', isAuthenticated, (req, res, next) => {
+router.post('/create', isAuthenticated, async (req, res, next) => {
 
-    const { sockId, subtotal, total } = req.body
+    try {
 
-    // const today = new Date()
-    // let expiry = today.setDate(today.getDate() + 1)
-
-    Cart.create({
-        owner: req.user._id,
-        subtotal, 
-        total,
-        // timeLeft: expiry,
-        $push: {socks: sockId}
-    })
-        .then((createdCart) => {
-            res.json(createdCart)
-        })
-        .catch((err) => {
-            console.log(err)
-            next(err)
-        })
-
-})
-
-router.post('/update', isAuthenticated, (req, res, next) => {
-
-    const { sockId, subtotal, total } = req.body
-
-    const cartId = req.user.cart
+        const { sockId, sockCost } = req.body
     
-    Cart.findByIdAndUpdate(
-        cartId,
-        {
-            subtotal, 
-            total,
-            $push: {socks: sockId}
-        },
-        { return: true }
-    )
-        .populate('socks')
-        .then((updatedCart) => {
-            res.json(updatedCart)
+        const newCart = await Cart.create({
+            owner: req.user._id,
+            subtotal: sockCost, 
+            total: sockCost * 1.08,
+            socks: [sockId]
         })
-        .catch((err) => {
-            console.log(err)
-            next(err)
-        })
+    
+        const populated = await newCart.populate('socks')
+
+        console.log("POPULATED ====>", populated)
+    
+            res.json(populated)
+
+    } catch (err) {
+        
+        res.json(err)
+        console.log(err)
+        next(err)
+
+    }
 
 })
 
-router.post('/remove-sock/:sockId', isAuthenticated, (req, res, next) => {
+router.post('/update', isAuthenticated, async (req, res, next) => {
 
-    const cartId = req.user.cart
-    const { sockId } = req.params
+    try {
 
-    Cart.findByIdAndUpdate(
-        cartId,
-        {
-            $pull: {socks: sockId}
-        },
-        { new: true }
-    )
-        .populate('socks')
-        .then((updatedCart) => {
-            res.json(updatedCart)
-        })
-        .catch((err) => {
-            console.log(err)
-            next(err)
-        })
+        const { sockId, cartId, sockCost } = req.body
+
+        const toUpdate = await Cart.findById(cartId)
+    
+        toUpdate.subtotal += sockCost
+        toUpdate.total = toUpdate.subtotal * toUpdate.tax
+        toUpdate.socks.push(sockId)
+
+        const newCart = await toUpdate.save()
+    
+        const populated = await newCart.populate('socks')
+    
+            res.json(populated)
+
+    } catch (err) {
+        
+        res.redirect(307, '/cart/create')
+        console.log(err)
+        next(err)
+    }
+
+})
+
+router.post('/remove-sock/:sockId', isAuthenticated, async (req, res, next) => {
+    
+
+    try {
+
+        const cartId = req.body._id
+        
+        const { sockId } = req.params
+
+        console.log("SOCKID ===>", sockId)
+
+        const toPopulate = await Cart.findById(cartId)
+
+        const cart = await toPopulate.populate('socks')
+
+        console.log("Cart ===>", cart)
+
+        let sock = cart.socks.find((thisSock) => thisSock._id.toString() === sockId)
+
+        console.log("Sock ====>", sock)
+        
+        let remainingSocks = cart.socks.filter((sock) => sock._id.toString() !== sockId)
+
+        cart.socks = remainingSocks
+        cart.subtotal -= sock.cost
+        cart.total = cart.subtotal * cart.tax
+
+        let newCart = await cart.save()
+
+        console.log("New cart ===>", newCart)
+
+        res.json(newCart)
+
+    } catch (err) {
+
+        res.json(err)
+        console.log(err)
+        next(err)
+    }
+
+
+
+
+    // Cart.findByIdAndUpdate(
+    //     cartId,
+    //     {
+    //         $pull: {socks: sockId}
+    //     },
+    //     { new: true }
+    // )
+    //     .populate('socks')
+    //     .then((updatedCart) => {
+    //         console.log("Updated Cart ====>", updatedCart)
+    //         res.json(updatedCart)
+    //     })
+    //     .catch((err) => {
+    //         res.json(err)
+    //         console.log(err)
+    //         next(err)
+    //     })
 
 })
 
