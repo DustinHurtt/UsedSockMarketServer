@@ -16,7 +16,7 @@ const cartSchema = new Schema(
             default: 0
         },
         owner: {type: Schema.Types.ObjectId, ref: 'User'},
-        // timeLeft: Date
+        timeLeft: Date,
         expireAt: { type: Date, expires: '2m', default: Date.now }
     },
     {

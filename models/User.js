@@ -12,7 +12,6 @@ const userSchema = new Schema(
     fullName: String,
     location: String,
     username: String,
-    cart: {type: Schema.Types.ObjectId, ref: 'Cart'},
     listedSocks: [{type: Schema.Types.ObjectId, ref: 'Sock'}]
     },
     {
